@@ -131,7 +131,20 @@ for i, section in enumerate(sections):
 
 #### LaTeX 模式
 
-1. **读取模板**：`pkucourse_paper_template/main.tex`
+1. **获取模板**（从 `source` 分支通过 git worktree）：
+
+   ```bash
+   # 在 AutoPku 仓库根目录执行
+   git worktree add /tmp/pku-paper-template source
+   # 读取模板
+   cp /tmp/pku-paper-template/pkucourse_paper_template/main.tex {course}/论文/template.tex
+   cp -r /tmp/pku-paper-template/pkucourse_paper_template/figures {course}/论文/
+   # 清理 worktree
+   git worktree remove /tmp/pku-paper-template
+   ```
+
+   > 也可用 `git show source:pkucourse_paper_template/main.tex` 直接读取单文件，但 worktree 更方便批量复制 figures。
+
 2. **替换占位符**：
    - `在此填写题目` → 论文题目
    - `在此填写页眉（可以是论文题目）` → 论文题目
@@ -144,19 +157,19 @@ for i, section in enumerate(sections):
 5. **保存文件**：`{course}/论文/paper.tex`
 6. **编译 PDF**：
 
-```bash
-# 检测 xelatex
-which xelatex || echo "NOT_FOUND"
+   ```bash
+   # 检测 xelatex
+   which xelatex || echo "NOT_FOUND"
 
-# 编译（需执行两次以生成目录）
-cd {course}/论文
-xelatex -interaction=nonstopmode paper.tex
-xelatex -interaction=nonstopmode paper.tex
-```
+   # 编译（需执行两次以生成目录）
+   cd {course}/论文
+   xelatex -interaction=nonstopmode paper.tex
+   xelatex -interaction=nonstopmode paper.tex
+   ```
 
 **编译踩坑**：
 - 若提示字体缺失，检查系统是否安装了宋体/黑体（macOS 通常自带）
-- 若 `pkucourse_paper_template/figures/pku.pdf` 缺失，从模板目录复制
+- 若 `figures/pku.pdf` 缺失，确认 worktree 已正确复制
 - 若中文显示为方框，确保使用 `ctexart` 文档类且编译器为 xelatex
 
 #### Word 模式
