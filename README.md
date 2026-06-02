@@ -45,7 +45,10 @@
 
 ![alt text](images/ccui.png)
 
-> hint: cc 目前不会主动激活 agent team, 后续再使用的时候你需要提及一下
+> hint: cc 目前不会主动激活 agent team, 后续再使用的时候你需要提及一下。example:
+> ```
+> 帮我同步这周的课程通知，用 agent team 并行处理每门课
+> ```
 
 ---
 
@@ -66,10 +69,7 @@
 ##  Introduction
 
 
-本项目最初基于 Claude Code 的实验性 Agent Team 功能实现。现在仓库同时保留：
-
-- 根目录 `skill.md`：Claude Code 入口
-- `codex/autopku/SKILL.md`：Codex 入口
+本项目最初基于 Claude Code 的实验性 Agent Team 功能实现。现在仓库根目录 `skill.md` 内置了运行时检测，自动适配 Claude/Codex/Kimi
 
 我没有选择自建一套 Agent 系统，而是将全部领域逻辑（教学网登录 via pku3b、PDF 解析策略、LaTeX 渲染管线、教学网提交协议等）内嵌在 skill 文件中。原因是：
 - **由一体化 Agentic RL 训练出的 Claude Code，工具调用被蒸馏回了模型参数，且涌现出了人类炼丹师想不到的pattern, 其内置的能力远优于手工搭建的 Agent 框架**。

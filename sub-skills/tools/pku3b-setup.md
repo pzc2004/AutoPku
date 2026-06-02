@@ -28,9 +28,19 @@ ln -sf pku3b-0.11.0-aarch64-apple-darwin/pku3b pku3b
 
 > **版本说明**: v0.11.0+ 支持公告 (`ann`) 和课表 (`ct`) 功能
 
-## TTY-safe 登录
+## 登录
 
-使用 expect 脚本避免 "input device is not a TTY" 错误：
+`pku3b init` 只需执行一次，凭证持久化到 `~/Library/Application Support/org.sshwy.pku3b/cfg.toml`。
+
+### 1. 检查是否已登录
+
+```bash
+/tmp/pku3b a ls 2>&1 || echo "NOT_LOGGED_IN"
+```
+
+正常返回作业列表 → 已登录，跳过步骤 2-3。返回 `NOT_LOGGED_IN` → 执行步骤 2。
+
+### 2. TTY-safe 登录（仅在未登录时）
 
 ```bash
 cat > /tmp/pku3b_login.exp << 'EOF'
@@ -47,10 +57,16 @@ chmod +x /tmp/pku3b_login.exp
 /tmp/pku3b_login.exp
 ```
 
-## 验证登录
+`pku3b init` 检查 TTY，直接管道输入会报错 "input device is not a TTY"，必须使用 expect。
+
+### 3. 验证并清理
 
 ```bash
+# 验证登录成功
 /tmp/pku3b a ls
+
+# 立即覆写临时文件，清除明文密码
+echo "" > /tmp/pku3b_login.exp
 ```
 
 ## 常用命令

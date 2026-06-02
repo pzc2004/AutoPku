@@ -9,9 +9,9 @@ description: AutoPku - 自动获取PKU课程通知、完成作业、撰写笔记
 
 ## 配置说明
 
-### 全局配置（推荐）
+### 本地配置（推荐）
 
-**文件位置**: `~/.claude/settings.json`
+**文件位置**: `.claude/settings.local.json`（项目根目录）
 
 ```json
 {
@@ -27,13 +27,15 @@ description: AutoPku - 自动获取PKU课程通知、完成作业、撰写笔记
 }
 ```
 
+本地配置仅在本项目目录生效，不会影响其他目录的 Claude Code 行为。
+
 **Kimi Code CLI 用户**: 建议设置环境变量 `KIMI_CODE_CLI=1` 以启用 Kimi Agent Team 支持（或通过 `which kimi` 自动检测）。
 
-### 本地配置（项目特定）
+### 全局配置（可选）
 
-**文件位置**: `.claude/settings.local.json`（项目根目录）
+**文件位置**: `~/.claude/settings.json`
 
-内容同上，本地配置会覆盖全局配置。
+内容同上。全局配置会在**所有目录**生效，每次打开 Claude Code 都会显示 bypass 模式警告。除非你只在本机使用 AutoPku，否则不推荐。
 
 ### 配置项说明
 
@@ -55,6 +57,7 @@ description: AutoPku - 自动获取PKU课程通知、完成作业、撰写笔记
 | "完成量子力学的第五次作业" | 完成指定课程作业（解析→解答→渲染→询问→提交） |
 | "给逻辑导论写笔记" | 从课件提取数学核心内容撰写笔记 |
 | "写马原课程论文" / "生成论文" | 生成课程论文（大纲→正文→渲染→询问） |
+| "给XX课做个汇报PPT" / "生成幻灯片" | 基于课件/笔记/论文生成汇报幻灯片（Typst PDF） |
 
 ## 执行架构
 
@@ -104,6 +107,12 @@ else:
   引用: sub-skills/tasks/write-paper.md
   ↓
 执行论文生成流程（大纲→正文→渲染→询问）
+
+用户: "制作幻灯片" / "生成汇报PPT"
+  ↓
+  引用: sub-skills/tasks/make-slides.md
+  ↓
+执行幻灯片生成流程（提取→大纲→生成→渲染→询问）
 ```
 
 ### 3. Agent 创建
@@ -157,9 +166,21 @@ ln -sf pku3b-0.11.0-aarch64-apple-darwin/pku3b pku3b
 
 ### 登录
 
-使用 expect 脚本（TTY-safe）：
+expect脚本只在初始化执行一次。后续所有命令自动读取 `cfg.toml` 中的凭证。
+
+**步骤**：
 
 ```bash
+# 1. 检查是否已登录
+/tmp/pku3b a ls 2>&1 || echo "NOT_LOGGED_IN"
+```
+
+如果已登录（正常返回作业列表），跳过步骤 2-4，直接进入任务。
+
+如果返回 `NOT_LOGGED_IN`（凭证不存在或密码错误），执行步骤 2：
+
+```bash
+# 2. 使用 expect 脚本登录（TTY-safe）
 cat > /tmp/pku3b_login.exp << 'EOF'
 #!/usr/bin/expect -f
 set timeout 30
@@ -172,6 +193,14 @@ expect eof
 EOF
 chmod +x /tmp/pku3b_login.exp
 /tmp/pku3b_login.exp
+```
+
+```bash
+# 3. 验证登录成功
+/tmp/pku3b a ls
+
+# 4. 立即覆写 expect 脚本，清除明文密码
+echo "" > /tmp/pku3b_login.exp
 ```
 
 **踩坑**: 直接管道输入会报错 "input device is not a TTY"，必须使用 expect。
@@ -203,6 +232,7 @@ chmod +x /tmp/pku3b_login.exp
 | 完成作业 | `tasks/do-homework.md` | 解析PDF→解答→渲染→询问用户→提交 |
 | 撰写笔记 | `tasks/write-notes.md` | 从课件提取数学核心，去除噪声 |
 | 撰写论文 | `tasks/write-paper.md` | 从大纲到正文到编译，支持LaTeX/Word双模式 |
+| 生成幻灯片 | `tasks/make-slides.md` | 基于touying-ethan模板生成Typst汇报幻灯片 |
 
 ## Tool Skills 索引
 
@@ -213,6 +243,7 @@ chmod +x /tmp/pku3b_login.exp
 | PDF读取 | `tools/pdf-reader.md` | PyMuPDF/pdfplumber 代码示例 |
 | 图片处理 | `tools/image-handler.md` | 论文配图搜索、绘制与LaTeX插入 |
 | Agent模板 | `tools/agent-helpers.md` | Coordinator/Parser/Solver/Writer/Submitter Prompts |
+| 幻灯片渲染 | `tools/slide-renderer.md` | touying-ethan模板获取、main.typ组装、typst编译 |
 
 ## Runtime Skills 索引
 
@@ -286,6 +317,18 @@ test/
 │   └── Homework202605_answer.pdf   # PDF答案
 └── 提交/                           # 最终提交文件
     └── Homework202605_answer.pdf
+```
+
+### 生成幻灯片输出
+
+```
+{course}/
+└── slides/
+    ├── main.typ              # Typst 源文件
+    ├── slides.pdf            # 最终 PDF
+    ├── outline.md            # 幻灯片大纲
+    └── figures/              # 图片目录
+        └── ...
 ```
 
 ## 安全规则
